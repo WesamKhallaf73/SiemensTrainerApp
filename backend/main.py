@@ -15,6 +15,8 @@ app.add_middleware(
 )
 
 engine = STLEngine()
+# Track last loaded code to decide when to reload simulation
+last_loaded_code = None
 
 class Diagnostic(BaseModel):
     severity: str
@@ -34,7 +36,8 @@ class ValidationResponse(BaseModel):
 class RunRequest(BaseModel):
     source_code: str
     inputs: Dict[str, bool] # "I0.0": true
-    previous_state: Optional[Dict[str, Any]] = None
+    # previous_state is deprecated/ignored by backend but accepted for compatibility
+    previous_state: Optional[Dict[str, Any]] = None 
 
 class RunResponse(BaseModel):
     ok: bool
@@ -48,14 +51,28 @@ def read_root():
 
 @app.post("/api/validate", response_model=ValidationResponse)
 def validate_project(request: ValidationRequest):
-    print(f"DEBUG: validate source: {repr(request.source_code)}")
-    ok, diags, tree = engine.compile(request.source_code)
+    print(f"DEBUG: validate source len: {len(request.source_code)}")
+    ok, diags = engine.compile_check(request.source_code)
     return ValidationResponse(ok=ok, diagnostics=[Diagnostic(**d) for d in diags])
 
 @app.post("/api/run", response_model=RunResponse)
 def run_simulation(request: RunRequest):
+    global last_loaded_code
+    
+    # Reload project if code changed or first run
+    if last_loaded_code != request.source_code or engine.sim is None:
+        print("Loading new source code...")
+        ok, diags = engine.load_project(request.source_code)
+        if not ok:
+            return RunResponse(
+                ok=False,
+                diagnostics=[Diagnostic(**d) for d in diags]
+            )
+        last_loaded_code = request.source_code
+
     try:
-        result = engine.run_cycle(request.source_code, request.inputs, request.previous_state)
+        # Step simulation
+        result = engine.run_cycle(request.inputs)
         # result has { ok, diagnostics, state, outputs }
         return RunResponse(
             ok=result["ok"],
@@ -72,5 +89,7 @@ def run_simulation(request: RunRequest):
 
 @app.post("/api/reset")
 def reset_simulation():
-    # Return empty state
+    global last_loaded_code
+    engine.reset()
+    last_loaded_code = None
     return {"state": {}}

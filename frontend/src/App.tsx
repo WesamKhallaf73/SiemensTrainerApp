@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react'
 import { AWLEditor } from './components/AWLEditor'
 import { IOPanel } from './components/IOPanel'
-import { Play, Square, RefreshCw, AlertCircle } from 'lucide-react'
+import { WatchTable } from './components/WatchTable'
+import { Play, Square, RefreshCw, AlertCircle, Layers, Table } from 'lucide-react'
 import clsx from 'clsx'
 
 const DEFAULT_CODE = `ORGANIZATION_BLOCK OB 1
@@ -22,6 +23,7 @@ function App() {
   const [outputs, setOutputs] = useState<Record<string, boolean>>({});
   const [cpuState, setCpuState] = useState<any>(null);
   const [isRunning, setIsRunning] = useState(false);
+  const [activeTab, setActiveTab] = useState<'io' | 'watch'>('io');
   const [cycleTime, setCycleTime] = useState(0);
 
   const API_URL = "http://localhost:8000/api";
@@ -158,15 +160,38 @@ function App() {
         </div>
 
         {/* Right Panel */}
-        <div className="w-1/3 min-w-[300px] flex flex-col bg-gray-50">
-          <IOPanel
-            inputs={inputs}
-            outputs={outputs}
-            onToggleInput={handleToggleInput}
-          />
+        <div className="w-1/3 min-w-[300px] flex flex-col bg-gray-50 border-l">
+          {/* Tabs Header */}
+          <div className="flex bg-white border-b">
+            <button
+              className={clsx("flex-1 py-2 text-sm font-medium flex items-center justify-center gap-2", activeTab === 'io' ? "text-siemens-teal border-b-2 border-siemens-teal" : "text-gray-500 hover:bg-gray-50")}
+              onClick={() => setActiveTab('io')}
+            >
+              <Layers size={16} /> Process Image
+            </button>
+            <button
+              className={clsx("flex-1 py-2 text-sm font-medium flex items-center justify-center gap-2", activeTab === 'watch' ? "text-siemens-teal border-b-2 border-siemens-teal" : "text-gray-500 hover:bg-gray-50")}
+              onClick={() => setActiveTab('watch')}
+            >
+              <Table size={16} /> Watch Table
+            </button>
+          </div>
 
-          <div className="bg-white border-t p-2 text-xs text-gray-400">
-            Scan Time: {cycleTime}ms &bull; CPU: S7-300 (Sim)
+          <div className="flex-1 overflow-auto bg-gray-50">
+            {activeTab === 'io' ? (
+              <IOPanel
+                inputs={inputs}
+                outputs={outputs}
+                onToggleInput={handleToggleInput}
+              />
+            ) : (
+              <WatchTable cpuState={cpuState} />
+            )}
+          </div>
+
+          <div className="bg-white border-t p-2 text-xs text-gray-400 flex justify-between">
+            <span>Scan Time: {cycleTime}ms</span>
+            <span>CPU: S7-300 (Sim)</span>
           </div>
         </div>
       </div>

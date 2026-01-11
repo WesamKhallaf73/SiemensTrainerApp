@@ -17,18 +17,25 @@ import traceback
 
 class STLEngine:
     def __init__(self):
-        pass
+        self.sim = None
 
-    def compile(self, source_code: str):
+    def load_project(self, source_code: str):
+        """
+        Compiles the project and initializes the persistent simulation.
+        Returns (success, diagnostics).
+        """
         diagnostics = []
         try:
             parser = AwlParser()
             parser.parseText(source_code)
             tree = parser.getParseTree()
-            sim = AwlSim()
-            sim.load(tree)
-            sim.cpu.build()
-            return True, [], tree
+            
+            self.sim = AwlSim()
+            self.sim.load(tree)
+            self.sim.cpu.build()
+            self.sim.startup()
+            
+            return True, []
         except AwlSimError as e:
             diag = {
                 "severity": "error",
@@ -38,9 +45,9 @@ class STLEngine:
                 "column": 0
             }
             diagnostics.append(diag)
-            return False, diagnostics, None
+            self.sim = None
+            return False, diagnostics
         except Exception as e:
-            traceback.print_exc()
             diag = {
                 "severity": "error",
                 "message": str(e),
@@ -49,31 +56,66 @@ class STLEngine:
                 "column": 0
             }
             diagnostics.append(diag)
-            return False, diagnostics, None
+            self.sim = None
+            return False, diagnostics
 
-    def run_cycle(self, source_code: str, inputs: dict, previous_state: dict):
-        success, diags, tree = self.compile(source_code)
-        if not success:
+    def compile_check(self, source_code: str):
+        """
+        Static checks only, does not affect running sim.
+        """
+        diagnostics = []
+        try:
+            parser = AwlParser()
+            parser.parseText(source_code)
+            tree = parser.getParseTree()
+            sim = AwlSim()
+            sim.load(tree)
+            sim.cpu.build()
+            return True, []
+        except AwlSimError as e:
+             diag = {
+                "severity": "error",
+                "message": e.getErrorMessage() if hasattr(e, 'getErrorMessage') else str(e),
+                "file": "main.awl",
+                "line": e.lineNumber if hasattr(e, 'lineNumber') else 0,
+                "column": 0
+            }
+             diagnostics.append(diag)
+             return False, diagnostics
+        except Exception as e:
+            diag = {
+                "severity": "error",
+                "message": str(e),
+                "file": "system",
+                "line": 0,
+                "column": 0
+            }
+            diagnostics.append(diag)
+            return False, diagnostics
+
+    def run_cycle(self, inputs: dict):
+        """
+        Steps the existing simulation.
+        Expects `load_project` to have been called successfully first.
+        """
+        if not self.sim:
             return {
                 "ok": False,
-                "diagnostics": diags
+                "diagnostics": [{
+                    "severity": "error",
+                    "message": "Simulation not loaded. Please validate/load code first.",
+                    "file": "system",
+                    "line": 0,
+                    "column": 0
+                }]
             }
 
-        sim = AwlSim()
-        sim.load(tree)
-        sim.cpu.build()
-        sim.startup()
-        
-        # Restore state
-        self._restore_state(sim, previous_state)
-        
         # Apply Inputs
-        self._apply_inputs(sim, inputs)
+        self._apply_inputs(self.sim, inputs)
         
         # Run Cycle
-        trace = []
         try:
-            sim.runCycle()
+            self.sim.runCycle()
         except Exception as e:
             traceback.print_exc()
             return {
@@ -81,14 +123,15 @@ class STLEngine:
                 "diagnostics": [{
                     "severity": "error",
                     "message": str(e),
+                    "file": "system",
                     "line": 0,
                     "column": 0
                 }]
             }
 
         # Extract State and Outputs
-        new_state = self._extract_state(sim)
-        output_updates = self._extract_outputs(sim)
+        new_state = self._extract_state(self.sim)
+        output_updates = self._extract_outputs(self.sim)
         
         return {
             "ok": True,
@@ -97,32 +140,8 @@ class STLEngine:
             "diagnostics": []
         }
 
-    def _restore_state(self, sim, state):
-        if not state:
-            return
-            
-        m_b64 = state.get("M")
-        if m_b64:
-            try:
-                m_bytes = base64.b64decode(m_b64)
-                # Ensure size matches? sim.cpu.flags.setDataBytes only writes available size
-                sim.cpu.flags.setDataBytes(bytearray(m_bytes))
-            except:
-                pass
-
-        # TODO: Restore DBs
-        
-        # Restore Outputs (Q) - effectively inputs to the next cycle calculation but usually Q is overwritten.
-        # However, for latching, Q state matters if read?
-        # S7 `U A 0.0` reads from process image output.
-        q_b64 = state.get("Q")
-        if q_b64:
-             try:
-                q_bytes = base64.b64decode(q_b64)
-                sim.cpu.outputs.setDataBytes(bytearray(q_bytes))
-             except:
-                pass
-
+    def reset(self):
+        self.sim = None
 
     def _apply_inputs(self, sim, inputs):
         # inputs: { "I0.0": True, ... }
@@ -142,14 +161,36 @@ class STLEngine:
                 except Exception as e:
                     print(f"Error applying input {key}: {e}")
 
-
     def _extract_state(self, sim):
         m_bytes = sim.cpu.flags.getDataBytes()
         q_bytes = sim.cpu.outputs.getDataBytes()
         
+        # Extract Timers
+        timers = {}
+        for i, t in enumerate(sim.cpu.timers):
+            if t.status != 0 or t.running:
+                timers[str(i)] = {
+                    "status": t.status,
+                    "running": t.running,
+                    "remaining": t.remaining,
+                    "deadline": getattr(t, 'deadline', 0.0)
+                }
+
+        # Extract DataBlocks (DB)
+        dbs = {}
+        try:
+            for db in sim.cpu.allDBs():
+                if db and hasattr(db, 'structInstance') and hasattr(db.structInstance, 'memory'):
+                    data = db.structInstance.memory.getDataBytes()
+                    dbs[str(db.index)] = base64.b64encode(data).decode('ascii')
+        except Exception as e:
+            print(f"Error extracting DBs: {e}")
+
         return {
             "M": base64.b64encode(m_bytes).decode('ascii'),
-            "Q": base64.b64encode(q_bytes).decode('ascii')
+            "Q": base64.b64encode(q_bytes).decode('ascii'),
+            "T": timers,
+            "DB": dbs
         }
 
     def _extract_outputs(self, sim):
