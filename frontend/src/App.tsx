@@ -2,7 +2,9 @@ import { useState, useEffect } from 'react'
 import { AWLEditor } from './components/AWLEditor'
 import { IOPanel } from './components/IOPanel'
 import { WatchTable } from './components/WatchTable'
-import { Play, Square, RefreshCw, AlertCircle, Layers, Table } from 'lucide-react'
+import { LessonPanel } from './components/LessonPanel'
+import { LESSONS } from './data/lessons'
+import { Play, Square, RefreshCw, AlertCircle, Layers, Table, BookOpen } from 'lucide-react'
 import clsx from 'clsx'
 
 const DEFAULT_CODE = `ORGANIZATION_BLOCK OB 1
@@ -25,6 +27,8 @@ function App() {
   const [isRunning, setIsRunning] = useState(false);
   const [activeTab, setActiveTab] = useState<'io' | 'watch'>('io');
   const [cycleTime, setCycleTime] = useState(0);
+  const [showLessons, setShowLessons] = useState(true);
+  const [activeLessonId, setActiveLessonId] = useState<string | null>(null);
 
   const API_URL = "http://localhost:8000/api";
 
@@ -82,6 +86,16 @@ function App() {
     return () => clearInterval(interval);
   }, [isRunning, cpuState, inputs, code]); // Deps logic needs care to avoid stale closures if not using Refs, but simple polling ok for now
 
+  // Handle Loading Code from Lesson (Resets Sim)
+  const handleLoadCode = (newCode: string) => {
+    setCode(newCode);
+    handleReset();
+  };
+
+  const handleSelectLesson = (id: string) => {
+    setActiveLessonId(id);
+  }
+
   const handleToggleInput = (addr: string, val: boolean) => {
     setInputs(prev => ({ ...prev, [addr]: val }));
   };
@@ -102,6 +116,14 @@ function App() {
           <div className="w-3 h-3 bg-green-500 rounded-full"></div>
           SIMATIC STL Trainer Pro
         </h1>
+        <div className="flex gap-2">
+          <button
+            className={clsx("px-3 py-2 border rounded flex items-center gap-2 font-medium transition-colors", showLessons ? "bg-teal-50 text-siemens-teal border-siemens-teal" : "text-gray-600 hover:bg-gray-50")}
+            onClick={() => setShowLessons(!showLessons)}
+          >
+            <BookOpen size={16} /> Lessons
+          </button>
+        </div>
         <div className="flex gap-2">
           <button
             className={clsx("px-4 py-2 rounded flex items-center gap-2 text-white font-medium", isRunning ? "bg-red-500 hover:bg-red-600" : "bg-green-600 hover:bg-green-700")}
@@ -137,6 +159,16 @@ function App() {
 
       {/* Main Content */}
       <div className="flex-1 flex overflow-hidden">
+        {/* Lesson Panel */}
+        {showLessons && (
+          <LessonPanel
+            lessons={LESSONS}
+            activeLessonId={activeLessonId}
+            onSelectLesson={handleSelectLesson}
+            onLoadCode={handleLoadCode}
+          />
+        )}
+
         {/* Editor */}
         <div className="flex-1 border-r bg-white p-0 relative">
           <AWLEditor
