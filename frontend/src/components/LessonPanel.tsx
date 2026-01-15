@@ -1,6 +1,6 @@
 import React from 'react';
 import { BookOpen, CheckCircle, Play } from 'lucide-react';
-import type { Lesson } from '../data/lessons';
+import type { Lesson } from '../data/lessons/index';
 // import clsx from 'clsx'; // Not used in this version
 
 interface LessonPanelProps {

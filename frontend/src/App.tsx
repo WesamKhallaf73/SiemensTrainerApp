@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react'
 import { AWLEditor } from './components/AWLEditor'
+import { LadderEditor } from './components/LadderEditor'
 import { IOPanel } from './components/IOPanel'
 import { WatchTable } from './components/WatchTable'
 import { LessonPanel } from './components/LessonPanel'
-import { LESSONS } from './data/lessons'
+import { LESSONS, LADDER_LESSONS } from './data/lessons/index'
 import { Play, Square, RefreshCw, AlertCircle, Layers, Table, BookOpen } from 'lucide-react'
 import clsx from 'clsx'
 
@@ -18,8 +19,25 @@ BEGIN
 END_ORGANIZATION_BLOCK
 `;
 
+
+import type { LadderProgram } from './types/Ladder';
+
+const INITIAL_LADDER: LadderProgram = {
+  rungs: [
+    {
+      id: 'r1',
+      elements: [
+        { id: 'e1', type: 'NO', address: 'I 0.0' },
+        { id: 'e2', type: 'EMPTY', address: '' },
+        { id: 'e3', type: 'COIL', address: 'Q 0.0' }
+      ]
+    }
+  ]
+};
+
 function App() {
   const [code, setCode] = useState(DEFAULT_CODE);
+  const [ladderState, setLadderState] = useState<LadderProgram>(INITIAL_LADDER);
   const [diagnostics, setDiagnostics] = useState<any[]>([]);
   const [inputs, setInputs] = useState<Record<string, boolean>>({});
   const [outputs, setOutputs] = useState<Record<string, boolean>>({});
@@ -29,6 +47,9 @@ function App() {
   const [cycleTime, setCycleTime] = useState(0);
   const [showLessons, setShowLessons] = useState(true);
   const [activeLessonId, setActiveLessonId] = useState<string | null>(null);
+  const [editorMode, setEditorMode] = useState<'STL' | 'LAD'>('STL');
+
+  const currentLessons = editorMode === 'STL' ? LESSONS : LADDER_LESSONS;
 
   const API_URL = "http://localhost:8000/api";
 
@@ -123,6 +144,20 @@ function App() {
           >
             <BookOpen size={16} /> Lessons
           </button>
+          <div className="flex bg-gray-100 rounded p-1 mx-2">
+            <button
+              className={clsx("px-3 py-1 text-xs font-bold rounded transition-colors", editorMode === 'STL' ? "bg-white text-blue-700 shadow-sm" : "text-gray-500 hover:text-gray-700")}
+              onClick={() => setEditorMode('STL')}
+            >
+              STL
+            </button>
+            <button
+              className={clsx("px-3 py-1 text-xs font-bold rounded transition-colors", editorMode === 'LAD' ? "bg-white text-blue-700 shadow-sm" : "text-gray-500 hover:text-gray-700")}
+              onClick={() => setEditorMode('LAD')}
+            >
+              LAD
+            </button>
+          </div>
         </div>
         <div className="flex gap-2">
           <button
@@ -155,27 +190,37 @@ function App() {
             <RefreshCw size={16} />
           </button>
         </div>
-      </header>
+      </header >
 
       {/* Main Content */}
-      <div className="flex-1 flex overflow-hidden">
+      < div className="flex-1 flex overflow-hidden" >
         {/* Lesson Panel */}
-        {showLessons && (
-          <LessonPanel
-            lessons={LESSONS}
-            activeLessonId={activeLessonId}
-            onSelectLesson={handleSelectLesson}
-            onLoadCode={handleLoadCode}
-          />
-        )}
+        {
+          showLessons && (
+            <LessonPanel
+              lessons={currentLessons}
+              activeLessonId={activeLessonId}
+              onSelectLesson={handleSelectLesson}
+              onLoadCode={handleLoadCode}
+            />
+          )
+        }
 
         {/* Editor */}
-        <div className="flex-1 border-r bg-white p-0 relative">
-          <AWLEditor
-            value={code}
-            onChange={(val) => setCode(val || '')}
-            diagnostics={diagnostics}
-          />
+        <div className="flex-1 border-r bg-white p-0 relative flex flex-col">
+          {editorMode === 'STL' ? (
+            <AWLEditor
+              value={code}
+              onChange={(val) => setCode(val || '')}
+              diagnostics={diagnostics}
+            />
+          ) : (
+            <LadderEditor
+              program={ladderState}
+              onProgramChange={setLadderState}
+              onCodeChange={(val) => setCode(val)}
+            />
+          )}
           {diagnostics.length > 0 && (
             <div className="absolute bottom-4 right-4 max-w-md bg-red-100 text-red-700 px-3 py-2 rounded shadow flex flex-col gap-1 text-sm z-50">
               <div className="flex items-center gap-2 font-bold">
@@ -226,8 +271,8 @@ function App() {
             <span>CPU: S7-300 (Sim)</span>
           </div>
         </div>
-      </div>
-    </div>
+      </div >
+    </div >
   )
 }
 
