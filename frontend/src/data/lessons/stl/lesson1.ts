@@ -2,50 +2,74 @@ import type { Lesson } from '../types';
 
 export const Lesson1: Lesson = {
     id: "1",
-    title: "Lesson 1: Basic Logic (AND / OR)",
+    title: "Lesson 1: Digital Inputs & Outputs",
     description: `
-### 1. Introduction to Boolean Logic
+### 1. How a PLC Thinks (Scan Cycle)
 
-In PLC programming, we use logic gates to make decisions.
-- **'A' (AND)**: Checks if inputs are TRUE *in series*.
-- **'O' (OR)**: Checks if inputs are TRUE *in parallel*.
-- **'=' (Assign)**: Writes the result to an Output.
+A PLC does NOT run code only once.
+It continuously executes the program in a **scan cycle**:
 
-#### Example: A Simple Light Switch
-'''awl
-A I 0.0   // Check Switch
-= Q 0.0   // Write to Light
-'''
+1. Read Inputs
+2. Execute Logic
+3. Update Outputs
+4. Repeat (milliseconds)
+
+Understanding this is **critical** for all PLC programming.
 
 ---
 
-### Your Task: The "Two-Hand" Safety Press
-To operate a dangerous press machine safely, an operator must press **two buttons simultaneously**.
+### 2. Digital Inputs (I) and Outputs (Q)
+
+- **Inputs (I)**: Signals coming FROM the field (buttons, sensors).
+- **Outputs (Q)**: Signals going TO the field (motors, lamps, valves).
+
+Common addresses:
+- \`I 0.0\` → Input byte 0, bit 0
+- \`Q 0.0\` → Output byte 0, bit 0
+
+---
+
+### 3. Basic Logic Instructions
+
+- **A (AND)**: Checks if an input is TRUE (1)
+- **= (Assign)**: Writes the result to an output
+
+#### Example: Button Controls Lamp
+'''awl
+A I 0.0     // Read Push Button
+= Q 0.0     // Copy state to Lamp
+'''
+
+If the button is pressed → Lamp ON  
+If released → Lamp OFF
+
+---
+
+### Your Task: Start Indicator Lamp
 
 **Requirements:**
-1. Turn on the Press Motor ('Q 0.0') **ONLY** when:
-   - Left Button ('I 0.0') is ON
-   - **AND**
-   - Right Button ('I 0.1') is ON.
+1. When Start Button (\`I 0.0\`) is pressed → Turn ON Lamp (\`Q 0.0\`)
+2. When released → Lamp turns OFF automatically
 `,
     initialCode: `ORGANIZATION_BLOCK OB 1
 BEGIN
-    // TODO: Implement Safety Logic
+    // Task: Simple Button → Lamp Control
     
-    A I 0.0  // Left Button
-    // Add logic here to check Right Button (I 0.1)
-    
-    // Assign to Output Q 0.0
+    // TODO: Read I 0.0 and assign it to Q 0.0
     
 END_ORGANIZATION_BLOCK`,
     solutionCode: `ORGANIZATION_BLOCK OB 1
 BEGIN
-    // Solution: Two-Hand Safety Press
+    // Solution: Button directly controls Lamp
     
-    A I 0.0  // Check Left Button
-    A I 0.1  // AND Check Right Button
-    = Q 0.0  // Assign to Press Motor
+    A I 0.0
+    = Q 0.0
     
 END_ORGANIZATION_BLOCK`,
-    objectives: ["Turn on Q 0.0 only when I 0.0 AND I 0.1 are both TRUE."]
+    objectives: [
+        "Understand PLC scan cycle",
+        "Read a digital input",
+        "Control a digital output"
+    ]
 };
+

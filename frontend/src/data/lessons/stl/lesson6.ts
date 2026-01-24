@@ -2,72 +2,68 @@ import type { Lesson } from '../types';
 
 export const Lesson6: Lesson = {
     id: "6",
-    title: "Lesson 6: Comparators (Temp Control)",
+    title: "Lesson 6: OFF-Delay Timer (TOF)",
     description: `
-### 1. Comparing Values
+### 1. What TOF Does
 
-- **'==I'**: Equal (Integer)
-- **'>I'**: Greater Than
-- **'<I'**: Less Than
+A **TOF** keeps the output ON *after* the input turns OFF.
 
-Load two values into Accumulator 'L', then Compare.
+Useful for:
+- Cooling fans  
+- Exhaust ventilation  
+- Delayed shutdown sequences  
 
-#### Example: Is MW 10 > 50?
+---
+
+### 2. TOF Structure
+
+- IN → Timer starts counting when IN = 0  
+- Q → Remains TRUE for PT duration after IN goes FALSE  
+
+---
+
+### Example: Fan Runs 4 Seconds After Heater Turns Off
+
 '''awl
-L MW 10
-L 50
->I
-= Q 0.0   // High if MW 10 > 50
+A I 0.0       // Heater ON
+L S5T#4S
+SD T2         // TOF
+    
+A T2
+= Q 0.0       // Fan
 '''
 
 ---
 
-### Your Task: Temperature Alarm
-Assume 'MW 10' is the temperature sensor.
-1. If Temp ('MW 10') > 100, Turn ON Alarm ('Q 0.0').
-2. If Temp ('MW 10') < 20, Turn ON Heater ('Q 0.1').
+### Your Task: Conveyor Cool-Down Timer
+
+1. Conveyor runs normally when Running Signal (\`I 0.1\`) is TRUE.
+2. When Running Signal goes FALSE:
+   - Keep Motor (\`Q 0.0\`) ON for **3 extra seconds**.
+
 `,
     initialCode: `ORGANIZATION_BLOCK OB 1
 BEGIN
-    // Simulatinon: Use I 0.0 to set Temp to 120.
-    A I 0.0
-    JCN UP
-    L 120
-    T MW 10
-UP: NOP 0
-
-    // TODO: Compare MW 10 > 100
-    L MW 10
-    L 100
-    // >I ?
-    // = Q 0.0
+    // TODO: Load running signal I 0.1
+    // TODO: Use SD instruction with T3
     
-    // TODO: Compare MW 10 < 20
+    // TODO: Use T3 to hold Q 0.0
     
 END_ORGANIZATION_BLOCK`,
     solutionCode: `ORGANIZATION_BLOCK OB 1
 BEGIN
-    // Solution: Temp Control
+    A I 0.1
+    L S5T#3S
+    SD T3
     
-    // Simulation Helper
-    A I 0.0
-    JCN UP
-    L 120
-    T MW 10
-UP: NOP 0
-
-    // Alarm Logic (> 100)
-    L MW 10
-    L 100
-    >I
+    A T3
     = Q 0.0
     
-    // Heater Logic (< 20)
-    L MW 10
-    L 20
-    <I
-    = Q 0.1
-    
 END_ORGANIZATION_BLOCK`,
-    objectives: ["Q 0.0 ON if MW 10 > 100", "Q 0.1 ON if MW 10 < 20"]
+    objectives: [
+        "Use TOF timers",
+        "Create delayed shutdown",
+        "Manage shutdown sequences"
+    ]
 };
+

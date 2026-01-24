@@ -2,60 +2,145 @@ import type { Lesson } from '../types';
 
 export const Lesson11: Lesson = {
     id: "11",
-    title: "Lesson 11: Word Logic (Hex & Masks)",
+    title: "Lesson 11: Data Blocks (DB) – Storing Parameters",
     description: `
-### 1. Bitwise Operations
+### 1. Why Data Blocks Exist
 
-We can manipulate 16 bits at once using Word Logic.
-- **'WAND'**: Word AND (Masking).
-- **'WOR'**: Word OR (Merging).
-- **'XOW'**: Word XOR (Toggling).
+In real industrial projects, values like:
+- Speed setpoints
+- Limits (Max current, Max temperature)
+- Recipe parameters
+- Calibration values
 
-#### Example: Masking
-Only keep the lower 4 bits of MW 10.
-'''awl
-L MW 10      // e.g. 2#1111_1111
-L W#16#000F  // Mask 2#0000_1111
-WAND
-T MW 12      // Result 2#0000_1111
-'''
+should NOT be hard-coded inside OB1.  
+Instead, they are stored in a **Data Block (DB)** so engineers can tune them later without rewriting logic.
+
+Think of a DB as a small “parameter memory” or a “recipe book”.
 
 ---
 
-### Your Task: Filter Status
-We read a "Status Word" from Input Word 'IW 0'.
-- We only care about **Bit 4** (Value 16 or 0x10).
-- If Bit 4 is ON, turn on 'Q 0.0'.
-- **Do not use 'A I 0.4'**. You must use Word Logic.
+### 2. DB Structure in Our Simulator
+
+A DB contains variables declared like this:
+
+'''awl
+DATA_BLOCK DB 1
+  STRUCT
+     TargetSpeed : INT := 1500;
+     MaxCurrent  : INT := 20;
+  END_STRUCT
+BEGIN
+END_DATA_BLOCK
+'''
+
+Each variable occupies memory locations:
+
+- First INT is stored at **DBW 0**
+- Second INT is stored at **DBW 2**
+(because INT = 2 bytes)
+
+So:
+- TargetSpeed → DBW 0
+- MaxCurrent  → DBW 2
+
+---
+
+### 3. Reading Values from the DB
+
+Inside OB1:
+1) Open the DB using \`OPN DB 1\`
+2) Load a value using \`L DBW x\`
+3) Transfer it using \`T ...\`
+
+Example:
+
+'''awl
+OPN DB 1
+L DBW 0
+T QW 4
+'''
+
+This sends the TargetSpeed parameter to output word QW4.
+
+---
+
+### Your Task: Use TWO Parameters from DB1
+
+We will use two parameters:
+1) **TargetSpeed** (DBW 0) → always sent to Motor Output Word \`QW 4\`
+2) **MaxCurrent** (DBW 2) → if ActualCurrent (\`IW 2\`) is higher than MaxCurrent, turn ON Alarm \`Q 0.0\`
+
+**Requirements**
+1) Define DB1 with:
+   - TargetSpeed = 1500
+   - MaxCurrent  = 20
+2) Always write TargetSpeed to \`QW 4\`
+3) Compare \`IW 2\` with MaxCurrent:
+   - If IW2 > MaxCurrent → Q0.0 = 1
+   - Else → Q0.0 = 0
+
+This makes DB usage visible:
+- You can change DB values later and behavior changes.
+
 `,
-    initialCode: `ORGANIZATION_BLOCK OB 1
+    initialCode: `DATA_BLOCK DB 1
+  STRUCT
+     TargetSpeed : INT := 1500;   // DBW 0
+     MaxCurrent  : INT := 20;     // DBW 2
+  END_STRUCT
 BEGIN
-    // Simulation: Force some inputs
-    L 2#0001_0000
-    T IW 0
-    
-    // TODO: Load IW 0
-    // TODO: Load Mask for Bit 4 (Hex 10)
-    // TODO: WAND
-    // TODO: Compare if Result != 0
-    
+END_DATA_BLOCK
+
+ORGANIZATION_BLOCK OB 1
+BEGIN
+    // 1) Open DB1
+    OPN DB 1
+
+    // 2) Send TargetSpeed to motor drive output word
+    // TODO: L DBW 0
+    // TODO: T QW 4
+
+    // 3) Overcurrent Alarm:
+    // If IW2 > MaxCurrent (DBW 2) -> Q0.0 ON
+    // TODO: L IW 2
+    // TODO: L DBW 2
+    // TODO: >I
+    // TODO: = Q 0.0
+
 END_ORGANIZATION_BLOCK`,
-    solutionCode: `ORGANIZATION_BLOCK OB 1
+    solutionCode: `DATA_BLOCK DB 1
+  STRUCT
+     TargetSpeed : INT := 1500;   // DBW 0
+     MaxCurrent  : INT := 20;     // DBW 2
+  END_STRUCT
 BEGIN
-    // Solution: Filter Bit 4
-    
-    // Sim Input
-    L 2#0001_0000
-    T IW 0
-    
-    L IW 0
-    L W#16#0010   // Mask for Bit 4
-    WAND          // Result is 0x10 if bit is true, 0x00 if false
-    
-    L 0
-    <>I           // Check if Result != 0
+END_DATA_BLOCK
+
+ORGANIZATION_BLOCK OB 1
+BEGIN
+    // Solution: Use parameters from DB1
+
+    // 1) Open DB1
+    OPN DB 1
+
+    // 2) Send TargetSpeed -> QW4
+    L DBW 0
+    T QW 4
+
+    // 3) Alarm if ActualCurrent (IW2) > MaxCurrent (DBW2)
+    L IW 2
+    L DBW 2
+    >I
     = Q 0.0
-    
+
 END_ORGANIZATION_BLOCK`,
-    objectives: ["Q 0.0 ON if IW 0 Bit 4 is High (using WAND)"]
+    objectives: [
+        "Define a DB using STRUCT variables with initial values",
+        "Understand DBW offsets (INT uses 2 bytes)",
+        "Read parameters from DB and use them in logic",
+        "Build a real industrial pattern: setpoint + limit alarm"
+    ]
 };
+
+
+

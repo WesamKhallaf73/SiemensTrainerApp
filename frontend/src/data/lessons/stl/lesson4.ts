@@ -2,50 +2,69 @@ import type { Lesson } from '../types';
 
 export const Lesson4: Lesson = {
     id: "4",
-    title: "Lesson 4: Timers (Staircase Light)",
+    title: "Lesson 4: Negation & RLO (Result of Logic Operation)",
     description: `
-### 1. Timers
+### 1. Understanding the RLO (Result of Logic Operation)
 
-- **'SD' (On-Delay)**: Wait before turning ON.
-- **'SE' (Extended Pulse)**: Turn ON immediately, then OFF after time.
+Every instruction updates an internal value called the **RLO**.
+Think of it as “the current TRUE/FALSE result”.
 
-#### Example: 2s Pulse
-'''awl
-A I 0.0
-L S5T#2S
-SE T 1
-'''
+Example:
+- \`A I 0.0\` loads the value of I 0.0 into the RLO.
+- \`AN I 0.1\` means AND with **NOT I 0.1**.
 
 ---
 
-### Your Task: The Staircase Light
-**Requirements:**
-1. When Button 'I 0.0' is pressed...
-2. Turn on Light 'Q 0.0' immediately.
-3. Keep it ON for **5 Seconds**, then turn it OFF automatically.
+### 2. Negation Instructions
+
+You can invert a signal in two ways:
+
+- **AN I 0.0** → AND the *inverse* of the input  
+- **NOT** → Invert the existing RLO
+
+---
+
+### 3. Example: Run Motor Only When Sensor is NOT Active
+
+'''awl
+A I 0.0     // Start command
+AN I 0.1    // Sensor NOT active
+= Q 0.0
+'''
+
+If sensor is ON → Motor is blocked.
+
+---
+
+### Your Task: Fault-Inhibited Start
+
+A machine can start only when:
+
+1. Start Button (\`I 0.0\`) is pressed  
+2. Fault (\`I 0.2\`) is NOT active  
+
+If a fault appears at any time → Motor must turn OFF.
+
 `,
     initialCode: `ORGANIZATION_BLOCK OB 1
 BEGIN
-    A I 0.0      // Button pressed
-    L S5T#5S     // Load time (5s)
+    // TODO: Load Start Button
     
-    // TODO: Start Timer T 0 as "Extended Pulse" (SE)
-    // SE T 0
+    // TODO: Block operation when Fault (I 0.2) is active
     
-    // TODO: Check if Timer T 0 is active and assign to Q 0.0
+    // TODO: Assign to Q 0.0
     
 END_ORGANIZATION_BLOCK`,
     solutionCode: `ORGANIZATION_BLOCK OB 1
 BEGIN
-    // Solution: Staircase Light
-    
-    A I 0.0
-    L S5T#5S
-    SE T 0    // Start Extended Pulse Timer
-    
-    A T 0     // Check Timer Status
-    = Q 0.0   // Assign to Light
+    A I 0.0     // Start
+    AN I 0.2    // Fault NOT active
+    = Q 0.0     // Motor
     
 END_ORGANIZATION_BLOCK`,
-    objectives: ["Input I 0.0 triggers Q 0.0", "Q 0.0 stays High for 5 seconds"]
+    objectives: [
+        "Use AN (AND-NOT)",
+        "Understand RLO flow",
+        "Implement negative logic"
+    ]
 };

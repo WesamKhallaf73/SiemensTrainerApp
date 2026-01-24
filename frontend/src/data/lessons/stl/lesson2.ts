@@ -4,49 +4,71 @@ export const Lesson2: Lesson = {
     id: "2",
     title: "Lesson 2: Memory & Latching",
     description: `
-### 1. Remembering State (Latching)
+### 1. Why Memory Is Needed
 
-Push-buttons are often "momentary". A machine needs to **remember** it was started.
-- **'S' (Set)**: Turns a bit ON and *keeps it ON*.
-- **'R' (Reset)**: Turns a bit OFF and *keeps it OFF*.
+Most push-buttons are **momentary**.
+A motor must **stay ON** even after the button is released.
 
-#### Example: Turning on a Fan
+This requires **memory**.
+
+---
+
+### 2. Set & Reset Instructions
+
+- **S (Set)**: Turns a bit ON and keeps it ON
+- **R (Reset)**: Turns a bit OFF and keeps it OFF
+
+Once set, the bit remains ON **until explicitly reset**.
+
+---
+
+### 3. Typical Industrial Start/Stop Logic
+
+- Start Button → SET motor
+- Stop Button → RESET motor
+
+#### Example:
 '''awl
-A I 0.0   // If Start pressed...
-S Q 0.0   // ...SET Fan (Latch)
+A I 0.0
+S Q 0.0
+
+A I 0.1
+R Q 0.0
 '''
 
 ---
 
-### Your Task: The Motor Starter
-Standard Start/Stop control for a conveyor.
+### Your Task: Conveyor Motor Starter
 
 **Requirements:**
-1. **Start:** If Green Button ('I 0.0') is pressed -> **Set** Motor ('Q 0.0').
-2. **Stop:** If Red Button ('I 0.1') is pressed -> **Reset** Motor ('Q 0.0').
+1. Green Button (\`I 0.0\`) → Start Motor (\`Q 0.0\`)
+2. Red Button (\`I 0.1\`) → Stop Motor (\`Q 0.0\`)
+3. Motor must remain ON after Start is released
 `,
     initialCode: `ORGANIZATION_BLOCK OB 1
 BEGIN
     // 1. Start Logic
-    A I 0.0    // Start Button
-    S Q 0.0    // Set Motor
-
+    A I 0.0        // Green Button
+    S Q 0.0        // Latch Motor
+    
     // 2. Stop Logic
-    // TODO: Add logic to Reset Q 0.0 if I 0.1 is pressed
+    // TODO: Reset Q 0.0 when I 0.1 is pressed
     
 END_ORGANIZATION_BLOCK`,
     solutionCode: `ORGANIZATION_BLOCK OB 1
 BEGIN
-    // Solution: Motor Start/Stop
+    // Solution: Start / Stop Motor
     
-    // 1. Start Logic
-    A I 0.0    // Start Button
-    S Q 0.0    // Set Motor
+    A I 0.0
+    S Q 0.0
     
-    // 2. Stop Logic
-    A I 0.1    // Stop Button
-    R Q 0.0    // Reset Motor
+    A I 0.1
+    R Q 0.0
     
 END_ORGANIZATION_BLOCK`,
-    objectives: ["Latch Q 0.0 on Start (I 0.0)", "Unlatch Q 0.0 on Stop (I 0.1)"]
+    objectives: [
+        "Understand PLC memory",
+        "Use Set and Reset instructions",
+        "Implement Start/Stop logic"
+    ]
 };

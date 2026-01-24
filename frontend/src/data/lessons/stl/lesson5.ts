@@ -2,56 +2,72 @@ import type { Lesson } from '../types';
 
 export const Lesson5: Lesson = {
     id: "5",
-    title: "Lesson 5: Counters (Product Count)",
+    title: "Lesson 5: ON-Delay Timer (TON)",
     description: `
-### 1. Counters
+### 1. Purpose of Timers
 
-- **'ZV' (Count Up)**: Increments the counter.
-- **'ZR' (Count Down)**: Decrements the counter.
-- **'S' (Set)**: Presets value.
-- **'R' (Reset)**: Zeros the counter.
+Timers introduce delays and duration control.
 
-#### Example: Counting Up
+A **TON** (On-Delay) waits for a signal to stay TRUE continuously before activating.
+
+---
+
+### 2. TON Structure
+
+- **IN** → Input condition  
+- **PT** → Preset time  
+- **Q** → Output (TRUE when timer finishes)  
+- **ET** → Elapsed time  
+
+---
+
+### 3. Example: Turn On a Fan 3 Seconds After Start
+
 '''awl
 A I 0.0
-CU C 1    // Count Up Counter 1
+L S5T#3S
+SE T1
+
+A T1
+= Q 0.0
 '''
 
 ---
 
-### Your Task: Conveyor Belt Counter
-Count the number of items passing a sensor.
-1. Each time Sensor 'I 0.0' triggers (0->1), increment Counter **'C 0'**.
-2. If Reset Button 'I 0.1' is pressed, Reset **'C 0'** to 0.
-3. Compare: (We will just watch C0 in the Watch Table).
+### Your Task: Delayed Start for Motor
+
+**Requirements:**
+
+1. When Start Button (\`I 0.0\`) is pressed, start a 5-second TON (\`T5\`).
+2. After the 5 seconds, turn ON Motor (\`Q 0.0\`).
+3. Releasing the button should cancel the timer.
+
 `,
     initialCode: `ORGANIZATION_BLOCK OB 1
 BEGIN
-    A I 0.0
-    CU C 0    // Count Up
+    // TODO: Timer Input (I 0.0)
     
-    A I 0.1
-    R C 0     // Reset Counter
+    // TODO: Load preset 5 seconds
     
-    // Let's copy Counter value to MW 10 to see it!
-    L C 0
-    T MW 10
+    // TODO: Start TON T5
+    
+    // TODO: After T5 completes, activate Q 0.0
     
 END_ORGANIZATION_BLOCK`,
     solutionCode: `ORGANIZATION_BLOCK OB 1
 BEGIN
-    // Solution: Counter
-    
     A I 0.0
-    CU C 0     // Increment Counter 0
+    L S5T#5S
+    SE T5
     
-    A I 0.1
-    R C 0      // Reset Counter 0
-    
-    // Visualize
-    L C 0
-    T MW 10
+    A T5
+    = Q 0.0
     
 END_ORGANIZATION_BLOCK`,
-    objectives: ["Increment C 0 on I 0.0", "Reset C 0 on I 0.1", "View value in MW 10"]
+    objectives: [
+        "Use TON timer",
+        "Load time constants",
+        "Delay motor activation"
+    ]
 };
+

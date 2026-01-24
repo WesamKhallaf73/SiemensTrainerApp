@@ -2,56 +2,85 @@ import type { Lesson } from '../types';
 
 export const Lesson3: Lesson = {
     id: "3",
-    title: "Lesson 3: Organization Blocks (OBs)",
+    title: "Lesson 3: Internal Memory (Markers)",
     description: `
-### 1. The PLC Operating System
+### 1. What Are Marker Bits (M)?
 
-- **'OB 1'**: Main Cycle (Loop).
-- **'OB 100'**: Startup (Setup).
+Markers are **internal PLC memory bits**.
+They are NOT connected to hardware.
 
-#### Example: Initialization
+Used for:
+- Internal states
+- Conditions
+- Interlocks
+- Sequences
+
+Example:
+- \`M 0.0\` → Internal flag
+- \`M 10.0\` → Alarm condition
+
+---
+
+### 2. Why Use Markers?
+
+Instead of controlling outputs directly, we:
+1. Compute logic into a marker
+2. Use the marker to control outputs
+
+This makes programs:
+- Cleaner
+- Easier to debug
+- Easier to expand
+
+---
+
+### 3. Example: Condition → Marker → Output
+
 '''awl
-ORGANIZATION_BLOCK OB 100
-BEGIN
-    L 50
-    T MW 0
-END_ORGANIZATION_BLOCK
+A I 0.0
+= M 0.0
+
+A M 0.0
+= Q 0.0
 '''
 
 ---
 
-### Your Task: System Ready Status
+### Your Task: Safety Interlock
+
+**Scenario:**
+- Door Switch (\`I 0.1\`)
+- Motor (\`Q 0.0\`)
+- Internal Safety Flag (\`M 1.0\`)
+
 **Requirements:**
-1. Use **'OB 100'** to set the "Ready Flag" ('M 0.0') to TRUE (1) on power-up.
-2. Use **'OB 1'** to copy that flag to the Green Light ('Q 0.0').
+1. If Door is CLOSED (\`I 0.1 = 1\`) → Set Safety Flag
+2. Motor runs ONLY when Safety Flag is TRUE
 `,
-    initialCode: `// Runs ONCE at startup
-ORGANIZATION_BLOCK OB 100
+    initialCode: `ORGANIZATION_BLOCK OB 1
 BEGIN
-    // TODO: Set M 0.0 to 1
+    // 1. Safety Evaluation
+    // TODO: Copy I 0.1 into M 1.0
     
-END_ORGANIZATION_BLOCK
-
-// Runs Repeatedly
-ORGANIZATION_BLOCK OB 1
-BEGIN
-    // TODO: Copy M 0.0 to Q 0.0
+    // 2. Motor Control
+    // TODO: Use M 1.0 to control Q 0.0
     
 END_ORGANIZATION_BLOCK`,
-    solutionCode: `// Solution: System Ready Status
-
-ORGANIZATION_BLOCK OB 100
+    solutionCode: `ORGANIZATION_BLOCK OB 1
 BEGIN
-    // Set Ready Flag at Startup
-    SET      // Force RLO=1
-    S M 0.0
-END_ORGANIZATION_BLOCK
-
-ORGANIZATION_BLOCK OB 1
-BEGIN
-    // Copy Flag to Light
-    A M 0.0
+    // Solution: Safety Interlock
+    
+    A I 0.1
+    = M 1.0
+    
+    A M 1.0
     = Q 0.0
+    
 END_ORGANIZATION_BLOCK`,
-    objectives: ["Set M 0.0 in OB 100", "Verify Q 0.0 is ON at startup"]
+    objectives: [
+        "Understand internal memory bits",
+        "Separate logic from outputs",
+        "Create safety interlocks"
+    ]
 };
+

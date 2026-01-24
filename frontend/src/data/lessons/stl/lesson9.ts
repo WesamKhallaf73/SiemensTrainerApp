@@ -2,82 +2,110 @@ import type { Lesson } from '../types';
 
 export const Lesson9: Lesson = {
     id: "9",
-    title: "Lesson 9: Jumps & Loops",
+    title: "Lesson 9: Comparisons (>=I, <I, ==I) – Threshold Alarms",
     description: `
-### 1. Conditional Jumps
+### 1. Why Comparisons Matter
 
-Sometimes we want to skip code.
-- **'JC Label'**: Jump if RLO is 1 (True).
-- **'JCN Label'**: Jump if RLO is 0 (False).
-- **'JU Label'**: Jump Unconditionally (Always).
+Most PLC decisions are based on values:
+- Temperature too high
+- Speed too low
+- Tank level reached limit
+- Count reached target
 
-#### Example: Skip Logic if Input is OFF
-'''awl
-    A I 0.0     // Check Input
-    JCN SKIP    // If 0, Jump to SKIP
-    S Q 0.0     // Else, Set Output
-SKIP: NOP 0
-'''
-
-#### Warning: Output Persistence
-If you jump over an assignment ('= Q 0.0'), the output **retains its last value**! It does not automatically turn off. You usually need to explicitly Reset it.
+A comparison produces a TRUE/FALSE result (RLO),
+which you can assign to an output.
 
 ---
 
-### Your Task: Manual Override
-1. Low Oil Pressure Alarm ('Q 0.0') normally turns on if 'M 10.0' is True.
-2. BUT, if Override Switch ('I 0.0') is ON, **Force the Alarm OFF**.
+### 2. The Comparison Pattern
+
+The common AWL pattern is:
+
+1) Load actual value
+2) Load threshold
+3) Compare (>=I, <I, ==I)
+4) Use the result to drive an output
+
+Example:
+
+'''awl
+L MW 10
+L 80
+>=I
+= Q 0.0
+'''
+
+---
+
+### 3. Making It Visible in Simulation
+
+In a real plant, MW10 could come from an analog input or HMI.
+In this lesson, we will simulate a value using a switch:
+
+- If \`I 0.0\` is OFF → Temperature = 60
+- If \`I 0.0\` is ON  → Temperature = 90
+
+We store this temperature into **MW10** so the student can see it.
+Then we compare MW10 with the threshold 80.
+
+---
+
+### Your Task: Over-Temperature Alarm
+
+**Requirements**
+1) Build a simulated temperature value into MW10:
+   - \`I 0.0\` OFF → MW10 = 60
+   - \`I 0.0\` ON  → MW10 = 90
+2) If MW10 >= 80 → Turn ON Alarm \`Q 0.0\`
+3) Otherwise → Alarm OFF
+
+Try toggling \`I 0.0\` and watch MW10 and Q0.0.
+
 `,
     initialCode: `ORGANIZATION_BLOCK OB 1
 BEGIN
-    // 1. Simulation Setup: Force Oil Pressure Low (Alarm condition)
-    // We use 'SET' to force the RLO to 1, ensuring 'S' works.
-    SET
-    S M 10.0
-    
-    // 2. Override Logic
-    A I 0.0      // Override Switch
-    
-    // TODO: IF Override is ON -> Jump to 'SAFE' label
-    // Hint: Use 'JC' (Jump Conditional)
-    
-    // 3. Normal Alarm Logic (Runs if Override is OFF)
-    A M 10.0
-    = Q 0.0
-    
-    // TODO: Jump over the 'SAFE' block so we don't turn off the alarm accidentally
-    // Hint: Use 'JU' (Jump Unconditional) to 'END'
-    
-SAFE: NOP 0
-    // TODO: Manual Override Action
-    // Hint: Explicitly Turn OFF Q 0.0 here using 'R'
-    
-END: NOP 0
-    
+    // 1) Simulate temperature into MW10 using I0.0
+    A I 0.0
+    // TODO: If I0.0 == 0 -> load 60
+    // TODO: If I0.0 == 1 -> load 90
+    // Hint: Use JCN and JU (IF / ELSE)
+    // TODO: T MW 10
+
+    // 2) Compare MW10 with threshold 80
+    // TODO: L MW 10
+    // TODO: L 80
+    // TODO: >=I
+    // TODO: = Q 0.0
+
 END_ORGANIZATION_BLOCK`,
     solutionCode: `ORGANIZATION_BLOCK OB 1
 BEGIN
-    // Solution: Manual Override
-    
-    // Setup
-    SET
-    S M 10.0
-    
-    // Logic
-    A I 0.0     // Check Override
-    JC SAFE     // Jump if True
-    
-    // Normal Operation
-    A M 10.0
+    // Solution: Simulated temperature + threshold alarm
+
+    // --- 1) Build MW10 ---
+    A I 0.0
+    JCN TTT      // if I0.0 is 0 -> 60
+    L 90
+    JU SS
+
+ TTT: NOP 0
+    L 60
+
+ SS: NOP 0
+    T MW 10
+
+    // --- 2) Compare and alarm ---
+    L MW 10
+    L 80
+    >=I
     = Q 0.0
-    
-    JU END      // Skip Safety Block
-    
-SAFE: 
-    R Q 0.0     // Force OFF
-    
-END: NOP 0
-    
+
 END_ORGANIZATION_BLOCK`,
-    objectives: ["Q 0.0 is ON when I 0.0 is OFF", "Q 0.0 is OFF (or skipped) when I 0.0 is ON"]
+    objectives: [
+        "Load and compare integer values",
+        "Use >=I to create a threshold alarm",
+        "Create visible simulation values using MW1..MW20"
+    ]
 };
+
+

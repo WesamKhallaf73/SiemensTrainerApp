@@ -2,81 +2,132 @@ import type { Lesson } from '../types';
 
 export const Lesson10: Lesson = {
     id: "10",
-    title: "Lesson 10: Edge Detection (One-Shots)",
+    title: "Lesson 10: Counters (Reliable Counting with MW + FP)",
     description: `
-### 1. Rising & Falling Edges
+### 1. Why We Build a Counter Like This
 
-Sometimes you only want to do something **once** when a button is pressed, not continuously while it is held.
-- **'FP' (Positive Edge / Rising)**: Pulse when signal goes 0 -> 1.
-- **'FN' (Negative Edge / Falling)**: Pulse when signal goes 1 -> 0.
+Some training/simulation environments implement counters differently.
+To make counting 100% clear and reliable, we will build our own counter using:
 
-Edges require a **Memory Bit** to store the previous state.
+- **MW** as the counter value (Current Count)
+- **FP** to generate one pulse per package
+- **+I** to increment
+- **Comparison** to detect when the target is reached
 
-#### Example: Catching a Rising Edge
+This is also excellent training because it shows what counters are doing internally.
+
+---
+
+### 2. The Pattern (Industrial and Simple)
+
+1) Make a one-scan pulse when sensor goes 0 -> 1  
+2) IF pulse happened -> count = count + 1  
+3) IF reset pressed -> count = 0  
+4) If count >= target -> turn ON lamp  
+
+---
+
+### Example: Increment MW20 on pulse
+
 '''awl
-A I 0.0
-FP M 0.0    // M 0.0 stores history
-= M 0.1     // M 0.1 is TRUE for exactly ONE cycle
+A I 0.2
+FP M 0.0
+JC INC
+JU END
+
+INC: L MW 20
+     L 1
+     +I
+     T MW 20
+END: NOP 0
 '''
 
 ---
 
-### Your Task: Toggle Switch
-Make a button act like a Toggle (Push-On, Push-Off).
-1. Detect Rising Edge of Button 'I 0.0'.
-2. Use that edge to **XOR** the Output 'Q 0.0' (Flip its state).
+### Your Task: Count 20 Packages
+
+**Requirements**
+1) Each package causes \`I 0.2\` to go 0 -> 1 (use FP).
+2) Count packages into \`MW 20\`.
+3) Reset count to 0 when \`I 0.3\` is pressed.
+4) When MW20 >= 20 -> turn ON Full lamp \`Q 0.0\`.
+
 `,
     initialCode: `ORGANIZATION_BLOCK OB 1
 BEGIN
-    // 1. Detect Rising Edge of I 0.0
-    A I 0.0
-    // TODO: Use 'FP' with a helper memory (e.g., M 10.0)
-    // FP M 10.0
-    // = M 10.1  (The Edge Pulse)
+    // 1) Reset logic: if I 0.3 ON -> MW20 = 0
+    A I 0.3
+    // TODO: JC RESET
 
-    // 2. Toggle Q 0.0
-    // Logic: If (Edge is True) AND (Q 0.0 is False) -> Set Q 0.0
-    //        If (Edge is True) AND (Q 0.0 is True)  -> Reset Q 0.0
-    // Hint: Or use XOR word logic: L QB 0, XOW ..., T QB 0
-    
-    // Simpler Toggle Logic for you to implement:
-    A M 10.1    // The Edge
-    AN Q 0.0
-    S M 10.2    // Request Set
-    
-    A M 10.1
-    A Q 0.0
-    S M 10.3    // Request Reset
-    
-    A M 10.2
-    S Q 0.0
-    R M 10.2
-    
-    A M 10.3
-    R Q 0.0
-    R M 10.3
-    
-END_ORGANIZATION_BLOCK`,
-    solutionCode: `ORGANIZATION_BLOCK OB 1
-BEGIN
-    // Solution: Toggle Switch
-    
-    // 1. Edge Detection
-    A I 0.0
-    FP M 10.0
-    = M 10.1    // One-Shot Pulse
-    
-    // 2. Toggle Logic (XOR approach)
-    A M 10.1    // If Pulse...
-    JCN END
-    
-    L QB 0      // Load Output Byte
-    L 1         // Load Bit Mask (0000 0001)
-    XOW         // XOR (Flips the bit)
-    T QB 0      // Save back
-    
+    // 2) Package pulse: I 0.2 rising edge
+    A I 0.2
+    // TODO: FP M 0.0
+    // TODO: If pulse -> JC INC
+
+    // 3) Output logic: if MW20 >= 20 -> Q0.0 ON
+    // TODO: L MW 20
+    // TODO: L 20
+    // TODO: >=I
+    // TODO: = Q 0.0
+
+    JU END
+
+RESET: NOP 0
+    // TODO: L 0
+    // TODO: T MW 20
+    JU END
+
+INC: NOP 0
+    // TODO: L MW 20
+    // TODO: L 1
+    // TODO: +I
+    // TODO: T MW 20
+
 END: NOP 0
 
 END_ORGANIZATION_BLOCK`,
-    objectives: ["Q 0.0 flips state each time I 0.0 is pressed"]
+    solutionCode: `ORGANIZATION_BLOCK OB 1
+BEGIN
+    // Solution: Count 20 packages using MW20
+
+    // Reset
+      A I 0.3
+    JC RRR
+
+    // Package pulse
+    A I 0.2
+    FP M 0.0
+    JC INC
+
+    // Lamp condition
+    L MW 20
+    L 5
+    >=I
+    = Q 0.0
+
+    JU END
+
+ RRR: NOP 0
+    L 0
+    T MW 20
+    R Q 0.0
+    JU END
+
+INC: NOP 0
+    L MW 20
+    L 1
+    +I
+    T MW 20
+    JU END
+
+END: NOP 0
+
+END_ORGANIZATION_BLOCK`,
+    objectives: [
+        "Count events safely using FP",
+        "Increment a memory word with +I",
+        "Use jumps to build clean counter logic",
+        "Use comparisons to detect reaching a target"
+    ]
 };
+

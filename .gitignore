@@ -21,3 +21,7 @@ backend/error_trace.txt
 
 # Docker
 .docker/
+
+# Temporary probe files
+probe_*.txt
+*.log
