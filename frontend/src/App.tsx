@@ -51,8 +51,15 @@ function App() {
 
   const currentLessons = editorMode === 'STL' ? LESSONS : LADDER_LESSONS;
 
-  // Determine the backend URL (either from Render env var or localhost fallback)
-  const BACKEND_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+  // Determine the backend URL
+  // Render's 'host' env var returns just the domain (e.g. app.onrender.com) without protocol.
+  // We need to ensure it has https:// if it doesn't start with http.
+  let envUrl = import.meta.env.VITE_API_BASE_URL;
+  if (envUrl && !envUrl.startsWith("http")) {
+    envUrl = `https://${envUrl}`;
+  }
+
+  const BACKEND_BASE = envUrl || "http://localhost:8000";
   // The backend routes are prefixed with /api (e.g. /api/validate)
   const API_URL = `${BACKEND_BASE}/api`;
 
