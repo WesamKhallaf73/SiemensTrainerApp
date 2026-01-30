@@ -51,7 +51,10 @@ function App() {
 
   const currentLessons = editorMode === 'STL' ? LESSONS : LADDER_LESSONS;
 
-  const API_URL = "http://localhost:8000/api";
+  // Determine the backend URL (either from Render env var or localhost fallback)
+  const BACKEND_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+  // The backend routes are prefixed with /api (e.g. /api/validate)
+  const API_URL = `${BACKEND_BASE}/api`;
 
   const handleValidate = async () => {
     try {
