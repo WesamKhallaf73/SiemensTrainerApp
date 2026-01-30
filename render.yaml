@@ -14,10 +14,9 @@ services:
 staticSites:
   # Frontend: React Vite (Static Site)
   - name: siemens-trainer-frontend
-    runtime: static
     rootDir: frontend
     buildCommand: npm run build
-    staticPublishPath: ./dist
+    publishPath: ./dist
     # region: frankfurt <-- Static sites are global CDN, cannot specify region
     envVars:
       - key: VITE_API_BASE_URL
