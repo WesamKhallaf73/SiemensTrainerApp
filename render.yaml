@@ -14,7 +14,6 @@ services:
 staticSites:
   # Frontend: React Vite (Static Site)
   - name: siemens-trainer-frontend
-    type: static
     rootDir: frontend
     buildCommand: npm run build
     publishPath: ./dist
