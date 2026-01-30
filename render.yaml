@@ -11,14 +11,13 @@ services:
         value: 8000
     autoDeploy: true
 
+staticSites:
   # Frontend: React Vite (Static Site)
-  - type: web
-    name: siemens-trainer-frontend
+  - name: siemens-trainer-frontend
     runtime: static
     rootDir: frontend
     buildCommand: npm run build
     staticPublishPath: ./dist
-    plan: free
     # region: frankfurt <-- Static sites are global CDN, cannot specify region
     envVars:
       - key: VITE_API_BASE_URL
@@ -26,20 +25,4 @@ services:
           type: web
           name: siemens-trainer-backend
           property: host
-        # Render provides the URL like https://backend.onrender.com
-        # We need to append /api to it in code, or here. 
-        # In App.tsx we used `... || "http://localhost:8000/api"`.
-        # The Render URL will be the root.
-        # So we should probably modify App.tsx to append /api if the env var doesn't have it, 
-        # OR just append it here if Render allows string concatenation (it doesn't easily).
-        # BETTER STRATEGY: 
-        # The `url` property is the ROOT url (e.g. https://xyz.onrender.com).
-        # In App.tsx, I should blindly append `/api` if it's missing, OR just assume the env var is the ROOT and append `/api` in code.
-        # Let's adjust this thought. 
-        # Current App.tsx: `const API_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api";` 
-        # If I pass the root URL, code needs to append `/api`.
-        # Let's verify App.tsx usage.
-        # It does `${API_URL}/validate`. 
-        # If env var is `https://backend.com`, result is `https://backend.com/validate` -> WRONG (needs /api/validate).
-        # So I need to append `/api` to the env var.
     autoDeploy: true
