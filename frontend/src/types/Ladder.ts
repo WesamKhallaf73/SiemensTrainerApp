@@ -1,5 +1,5 @@
 
-export type LadderElementType = 'NO' | 'NC' | 'COIL' | 'EMPTY' | 'BRANCH' | 'TIMER_ON' | 'TIMER_OFF' | 'TIMER_PULSE' | 'COUNTER_UP' | 'COUNTER_DOWN' | 'COIL_SET' | 'COIL_RESET' | 'CMP_EQ' | 'CMP_GT' | 'CMP_LT' | 'CMP_GE' | 'CMP_LE' | 'CMP_NE' | 'MATH_MOV' | 'MATH_ADD' | 'MATH_SUB' | 'MATH_MUL' | 'MATH_DIV';
+export type LadderElementType = 'NO' | 'NC' | 'COIL' | 'EMPTY' | 'BRANCH' | 'TIMER_ON' | 'TIMER_OFF' | 'TIMER_PULSE' | 'COUNTER_UP' | 'COUNTER_DOWN' | 'COUNTER_SET' | 'COIL_SET' | 'COIL_RESET' | 'CMP_EQ' | 'CMP_GT' | 'CMP_LT' | 'CMP_GE' | 'CMP_LE' | 'CMP_NE' | 'MATH_MOV' | 'MATH_ADD' | 'MATH_SUB' | 'MATH_MUL' | 'MATH_DIV';
 
 export interface LadderElement {
     id: string; // Unique ID for keying

@@ -164,6 +164,7 @@ export const LadderEditor: React.FC<LadderEditorProps> = ({ program, onProgramCh
                                         {el.type === 'TIMER_PULSE' && <div className="border border-gray-800 px-1 text-xs bg-yellow-50">TP</div>}
                                         {el.type === 'COUNTER_UP' && <div className="border border-gray-800 px-1 text-xs bg-green-50">CTU</div>}
                                         {el.type === 'COUNTER_DOWN' && <div className="border border-gray-800 px-1 text-xs bg-green-50">CTD</div>}
+                                        {el.type === 'COUNTER_SET' && <div className="border border-gray-800 px-1 text-xs bg-green-100">( SC )</div>}
                                         {el.type === 'CMP_EQ' && <div className="border border-gray-800 px-1 text-xs bg-purple-50">==I</div>}
                                         {el.type === 'CMP_GT' && <div className="border border-gray-800 px-1 text-xs bg-purple-50">{'>I'}</div>}
                                         {el.type === 'CMP_LT' && <div className="border border-gray-800 px-1 text-xs bg-purple-50">{'<I'}</div>}
@@ -259,7 +260,7 @@ export const LadderEditor: React.FC<LadderEditorProps> = ({ program, onProgramCh
 
                         {/* Address Input (Moved) */}
                         {(() => {
-                            const showOperandB = ['CMP_EQ', 'CMP_GT', 'CMP_LT', 'CMP_GE', 'CMP_LE', 'CMP_NE', 'MATH_MOV', 'TIMER_ON', 'TIMER_OFF', 'TIMER_PULSE', 'MATH_ADD', 'MATH_SUB', 'MATH_MUL', 'MATH_DIV'].includes(activeElement.type);
+                            const showOperandB = ['CMP_EQ', 'CMP_GT', 'CMP_LT', 'CMP_GE', 'CMP_LE', 'CMP_NE', 'MATH_MOV', 'TIMER_ON', 'TIMER_OFF', 'TIMER_PULSE', 'COUNTER_SET', 'MATH_ADD', 'MATH_SUB', 'MATH_MUL', 'MATH_DIV'].includes(activeElement.type);
                             const showOperandC = ['MATH_ADD', 'MATH_SUB', 'MATH_MUL', 'MATH_DIV'].includes(activeElement.type);
 
                             let labelA = 'Op A';
@@ -268,6 +269,7 @@ export const LadderEditor: React.FC<LadderEditorProps> = ({ program, onProgramCh
                             let labelB = 'Op B';
                             if (activeElement.type === 'MATH_MOV') labelB = 'Dest';
                             if (['TIMER_ON', 'TIMER_OFF', 'TIMER_PULSE'].includes(activeElement.type)) labelB = 'Time';
+                            if (activeElement.type === 'COUNTER_SET') labelB = 'Value';
 
                             return (
                                 <div className="flex gap-2 mr-4 border-r pr-4 border-gray-200">
@@ -346,6 +348,7 @@ export const LadderEditor: React.FC<LadderEditorProps> = ({ program, onProgramCh
                             <button onClick={() => { updateElement(activeRung.id, selectedElementId, { type: 'TIMER_PULSE', address: 'T 1' }); }} className="px-3 py-1 hover:bg-white hover:shadow-sm rounded text-xs font-bold" title="Pulse Timer">TP</button>
                             <button onClick={() => { updateElement(activeRung.id, selectedElementId, { type: 'COUNTER_UP', address: 'C 1' }); }} className="px-3 py-1 hover:bg-white hover:shadow-sm rounded text-xs font-bold" title="Count Up">CTU</button>
                             <button onClick={() => { updateElement(activeRung.id, selectedElementId, { type: 'COUNTER_DOWN', address: 'C 1' }); }} className="px-3 py-1 hover:bg-white hover:shadow-sm rounded text-xs font-bold" title="Count Down">CTD</button>
+                            <button onClick={() => { updateElement(activeRung.id, selectedElementId, { type: 'COUNTER_SET', address: 'C 1', operandB: '0' }); }} className="px-3 py-1 hover:bg-white hover:shadow-sm rounded text-xs font-bold" title="Set Counter Value">SC</button>
                             <div className="w-px bg-gray-300 mx-1 my-1"></div>
                             <button onClick={() => { updateElement(activeRung.id, selectedElementId, { type: 'CMP_EQ', address: 'MW 0', operandB: '0' }); }} className="px-3 py-1 hover:bg-white hover:shadow-sm rounded text-xs font-bold" title="Equal (==I)">==</button>
                             <button onClick={() => { updateElement(activeRung.id, selectedElementId, { type: 'CMP_GT', address: 'MW 0', operandB: '0' }); }} className="px-3 py-1 hover:bg-white hover:shadow-sm rounded text-xs font-bold" title="Greater Than (>I)">{' > '}</button>

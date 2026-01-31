@@ -103,9 +103,9 @@ function compileElementList(elements: LadderElement[], isNested: boolean = false
                 lines.push(`A ${el.address}`);
                 break;
 
-            case 'TIMER_PULSE': // Pulse (SP)
+            case 'TIMER_PULSE': // Extended Pulse (SE) - Monostable
                 lines.push(`L ${formatS5Timer(el.operandB)}`);
-                lines.push(`SP ${el.address}`);
+                lines.push(`SE ${el.address}`);
                 lines.push(`A ${el.address}`);
                 break;
 
@@ -115,6 +115,11 @@ function compileElementList(elements: LadderElement[], isNested: boolean = false
 
             case 'COUNTER_DOWN':
                 lines.push(`CD ${el.address}`);
+                break;
+
+            case 'COUNTER_SET':
+                lines.push(`L ${el.operandB || '0'}`);
+                lines.push(`S ${el.address}`);
                 break;
 
             case 'CMP_EQ':

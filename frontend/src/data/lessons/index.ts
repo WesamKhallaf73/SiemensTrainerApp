@@ -39,6 +39,21 @@ import { L3 } from './ladder/lesson3';
 import { L4 } from './ladder/lesson4';
 import { L5 } from './ladder/lesson5';
 import { L6 } from './ladder/lesson6';
+import { L7 } from './ladder/lesson7';
+import { L8 } from './ladder/lesson8';
+import { L9 } from './ladder/lesson9';
+import { L10 } from './ladder/lesson10';
+import { L11 } from './ladder/lesson11';
+import { L12 } from './ladder/lesson12';
+import { L13 } from './ladder/lesson13';
+import { L14 } from './ladder/lesson14';
+import { L15 } from './ladder/lesson15';
+import { L16 } from './ladder/lesson16';
+import { L17 } from './ladder/lesson17';
+import { L18 } from './ladder/lesson18';
+import { L19 } from './ladder/lesson19';
+import { L20 } from './ladder/lesson20';
+import { L21 } from './ladder/lesson21';
 
 
 export const LESSONS: Lesson[] = [
@@ -50,5 +65,6 @@ export const LESSONS: Lesson[] = [
 
 
 export const LADDER_LESSONS: Lesson[] = [
-    L1, L2, L3, L4, L5, L6
+    L1, L2, L3, L4, L5, L6, L7, L8, L9, L10, L11, L12, L13, L14, L15, L16, L17, L18, L19
+    , L20, L21
 ];
